@@ -2,53 +2,58 @@
 declare(strict_types=1);
 
 trait AppUserAuthentication {
+    public string $appLogin = "AppUser";
+    public string $appPassword = "AppUserPass";
 
-  public string $appUserLogin = "AppUser";
-  public string $appUserPassword = "AppUserPass";
-
-  public function authenticate(string $login, string $password): string {
-    if ($login === $this->appUserLogin && $password === $this->appUserPassword) { 
-      return "Пользователь приложения"; 
+    public function authenticate(): string {
+        if ($this->login === $this->appLogin && $this->password === $this->appPassword) {
+            return "Пользователь приложения";
+        }
+        return "Не найден";
     }
-
-    return "Не найден";
-  }
 }
 
 trait MobileUserAuthentication {
+    public string $mobileLogin = "MobileUser";
+    public string $mobilePassword = "MobileUserPass";
 
-  public string $mobileUserLogin = "MobileUser";
-  public string $mobileUserPassword = "MobileUserPass";
-
-  public function authenticate(string $login, string $password): string {
-    if ($login === $this->mobileUserLogin && $password === $this->mobileUserPassword) { 
-      return "Пользователь мобильного приложения"; 
+    public function authenticate(): string {
+        if ($this->login === $this->mobileLogin && $this->password === $this->mobilePassword) {
+            return "Пользователь мобильного приложения";
+        }
+        return "Не найден";
     }
-
-    return "Не найден";
-  }
 }
 
+class UserAuth {
+    public string $login;
+    public string $password;
 
-class Authentication
-{
-  use AppUserAuthentication, MobileUserAuthentication {
-    AppUserAuthentication::authenticate as authenticateApp;
-    MobileUserAuthentication::authenticate as authenticateMobile;
-  }
-
-  public function authen (string $login, string $password, string $type = 'app') 
-  {
-    if ($type === 'app') {
-      return $this->authenticateApp($login, $password);
-    } elseif ($type === 'mobile') {
-      return $this->authenticateMobile($login, $password);
+    use AppUserAuthentication, MobileUserAuthentication {
+      AppUserAuthentication::authenticate insteadof MobileUserAuthentication; // основной метод
+      MobileUserAuthentication::authenticate as authenticateMobile; // переименовываем
     }
-    return "Тип аутентификации не поддерживается";
-    
-  }
+
+    public function __construct(string $login, string $password) {
+        $this->login = $login;
+        $this->password = $password;
+    }
+
+    public function authenticateUser(string $type): string {
+        if ($type === 'app') {
+            return $this->authenticate();
+        } elseif ($type === 'mobile') {
+            return $this->authenticateMobile();
+        }
+        return "Неверный тип авторизации";
+    }
 }
 
-$person = new Authentication();
-$person->authen("log", "pass", 'app');
-$person->authen("MobileUser", "MobileUserPass", 'mobile');
+ // Пользователь приложения
+$user = new UserAuth("AppUser", "AppUserPass");
+echo $user->authenticateUser('app') . "\n";     
+echo $user->authenticateUser('mobile') . "\n";   // Ошибочный
+
+// Пользователь мобильного приложения
+$mobileUser = new UserAuth("MobileUser", "MobileUserPass");
+echo $mobileUser->authenticateUser('mobile') . "\n"; 
